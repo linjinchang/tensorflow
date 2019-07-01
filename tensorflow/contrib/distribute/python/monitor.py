@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 from tensorflow.python.eager import context
+from tensorflow.python.framework import errors
 from tensorflow.python.ops import variables
 
 
@@ -50,12 +51,15 @@ class Monitor(object):
     else:
       if session is None:
         raise ValueError("Should provide a `session` in Graph mode.")
+      session.run(step_callable.initialize())
       self._run_step = session.make_callable(step_callable())
       session.run(variables.global_variables_initializer())
 
   def run_steps(self, num_steps=None):
     step = 0
-    done = False
-    while done is not None and (num_steps is None or step < num_steps):
-      done = self._run_step()
-      step += 1
+    while num_steps is None or step < num_steps:
+      try:
+        self._run_step()
+        step += 1
+      except errors.OutOfRangeError:
+        break

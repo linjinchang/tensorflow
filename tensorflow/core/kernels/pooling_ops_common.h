@@ -13,8 +13,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-#ifndef TENSORFLOW_KERNELS_POOLING_OPS_COMMON_H_
-#define TENSORFLOW_KERNELS_POOLING_OPS_COMMON_H_
+#ifndef TENSORFLOW_CORE_KERNELS_POOLING_OPS_COMMON_H_
+#define TENSORFLOW_CORE_KERNELS_POOLING_OPS_COMMON_H_
 
 #include <vector>
 
@@ -96,6 +96,11 @@ class MaxPoolingOp : public OpKernel {
     OP_REQUIRES(context, ksize_.size() == 4,
                 errors::InvalidArgument("Sliding window ksize field must "
                                         "specify 4 dimensions"));
+    for (int i = 0; i < ksize_.size(); ++i) {
+      OP_REQUIRES(context, ksize_[i] > 0,
+                  errors::InvalidArgument("Sliding window ksize for dimension ",
+                                          i, " was zero."));
+    }
     OP_REQUIRES_OK(context, context->GetAttr("strides", &stride_));
     OP_REQUIRES(context, stride_.size() == 4,
                 errors::InvalidArgument("Sliding window stride field must "
@@ -596,7 +601,7 @@ void SpatialAvgPool(OpKernelContext* context, Tensor* output,
   // so the factor 0.01 (i.e. 1/100) with a max of 10000, was chosen to limit
   // the work unit cost to an operating range in which it emperically performed
   // best.
-  const int64 work_unit_cost = std::max(10000LL, work_unit_size / 100LL);
+  const int64 work_unit_cost = std::max(int64{10000}, work_unit_size / 100LL);
   const DeviceBase::CpuWorkerThreads& worker_threads =
       *(context->device()->tensorflow_cpu_worker_threads());
   Shard(worker_threads.num_threads, worker_threads.workers,
@@ -605,4 +610,4 @@ void SpatialAvgPool(OpKernelContext* context, Tensor* output,
 
 }  // namespace tensorflow
 
-#endif  // TENSORFLOW_KERNELS_POOLING_OPS_COMMON_H_
+#endif  // TENSORFLOW_CORE_KERNELS_POOLING_OPS_COMMON_H_

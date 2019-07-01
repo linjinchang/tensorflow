@@ -1,17 +1,19 @@
 # Description:
 #   JNI-based Java inference interface for TensorFlow.
 
-package(default_visibility = ["//visibility:public"])
-
-licenses(["notice"])  # Apache 2.0
-
-exports_files(["LICENSE"])
-
+load("@build_bazel_rules_android//android:rules.bzl", "android_library")
 load(
     "//tensorflow:tensorflow.bzl",
-    "tf_copts",
     "if_android",
+    "tf_copts",
 )
+
+package(
+    default_visibility = ["//visibility:public"],
+    licenses = ["notice"],  # Apache 2.0
+)
+
+exports_files(["LICENSE"])
 
 exports_files([
     "jni/version_script.lds",
@@ -71,8 +73,7 @@ cc_binary(
         "-z defs",
         "-s",
         "-Wl,--gc-sections",
-        "-Wl,--version-script",  # This line must be directly followed by LINKER_SCRIPT.
-        LINKER_SCRIPT,
+        "-Wl,--version-script,$(location {})".format(LINKER_SCRIPT),
     ]),
     linkshared = 1,
     linkstatic = 1,
